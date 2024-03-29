@@ -1,0 +1,111 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+using ll = long long;
+
+const int MAXN = 4e5 + 5;
+const ll NEGINF = -2e14 - 1;
+
+struct node
+{
+	ll lz, val;
+};
+
+node tree[2 * MAXN];
+ll a[MAXN];
+
+void pushup(int p)
+{
+	tree[p].val = fmax(tree[2 * p].val, tree[2 * p + 1].val);
+}
+
+void pushdown(int p, int l, int mid, int r)
+{
+	if (tree[p].lz != 0)
+	{
+		tree[2 * p].lz += tree[p].lz, tree[2 * p + 1].lz += tree[p].lz;
+		tree[2 * p].val += tree[p].lz, tree[2 * p + 1].val += tree[p].lz;
+		tree[p].lz = 0;
+	}
+}
+
+void build(int p, int l, int r)
+{
+	tree[p].lz = 0;
+	if (l == r)
+	{
+		tree[p].val = a[l];
+		return;
+	}
+
+	int mid = l + (r - l) / 2;
+	build(2 * p, l, mid);
+	build(2 * p + 1, mid + 1, r);
+	pushup(p);
+}
+
+void add(int p, int l, int r, int a, int b, ll val)
+{
+	if ((a > r) || (b < l)) return;
+	if ((a <= l) && (r <= b))
+	{
+		tree[p].val += val;
+		tree[p].lz += val;
+		return;
+	}
+
+	int mid = l + (r - l) / 2;
+	pushdown(p, l, mid, r);
+	add(2 * p, l, mid, a, b, val);
+	add(2 * p + 1, mid + 1, r, a, b, val);
+	pushup(p);
+}
+
+ll query(int p, int l, int r, int a, int b)
+{
+	if ((a > r) || (b < l)) return NEGINF;
+	if ((a <= l) && (r <= b)) return tree[p].val;
+	int mid = l + (r - l) / 2;
+	pushdown(p, l, mid, r);
+	return fmax(query(2 * p, l, mid, a, b), query(2 * p + 1, mid + 1, r, a, b));
+}
+
+int main()
+{
+	int n, q;
+	cin >> n >> q;
+	for (int i = 1; i <= n; i++)
+	{
+		cin >> a[i];
+		a[i] += a[i - 1];
+	}
+
+	build(1, 0, n);
+	while (q--)
+	{
+		int a;
+		cin >> a;
+		if (a == 1)
+		{
+			int ind;
+			ll upd;
+			cin >> ind >> upd;
+
+			ll orig = query(1, 0, n, ind, ind) - query(1, 0, n, ind - 1, ind - 1);
+			upd -= orig;
+
+			add(1, 0, n, ind, n, upd);
+		}
+
+		else
+		{
+			int l, r;
+			cin >> l >> r;
+			l--;
+
+			cout << query(1, 0, n, l, r) - query(1, 0, n, l, l) << "\n";
+		}
+	}
+}
