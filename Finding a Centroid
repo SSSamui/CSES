@@ -1,0 +1,51 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+ 
+vector<vector<int>> edges(2e5 + 1);
+vector<bool> visited(2e5 + 1);
+vector<vector<int>> children(2e5 + 1);
+vector<int> desc(2e5 + 1, 1);
+ 
+void dfs(int node)
+{
+	visited[node] = true;
+	for (int i = 0; i < edges[node].size(); i++) if (!visited[edges[node][i]])
+	{
+		children[node].push_back(edges[node][i]);
+		dfs(edges[node][i]);
+		desc[node] += desc[edges[node][i]];
+	}
+}
+ 
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+ 
+	int n;
+	cin >> n;
+	for (int i = 1; i < n; i++)
+	{
+		int a, b;
+		cin >> a >> b;
+		edges[a].push_back(b), edges[b].push_back(a);
+	}
+ 
+	dfs(1);
+	int ans = 1;
+	int ind = 0;
+	while (ind < children[ans].size())
+	{
+		if (desc[children[ans][ind]] <= n / 2) ind++;
+		else
+		{
+			ans = children[ans][ind];
+			ind = 0;
+		}
+	}
+ 
+	cout << ans;
+}
