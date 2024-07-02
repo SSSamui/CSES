@@ -1,0 +1,40 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	int n;
+	cin >> n;
+	n--;
+
+	vector<int> sseq(1);
+	cin >> sseq[0];
+
+	while (n--)
+	{
+		int a;
+		cin >> a;
+		if (sseq.back() < a) sseq.push_back(a);
+		else
+		{
+			int l = 0;
+			int r = sseq.size() - 1;
+			while (l < r)
+			{
+				int m = l + (r - l) / 2;
+				if (sseq[m] < a) l = m + 1;
+				else r = m;
+			}
+
+			sseq[l] = a;
+		}
+	}
+
+	cout << sseq.size();
+}
