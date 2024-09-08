@@ -1,0 +1,94 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+using ll = long long;
+
+struct node
+{
+	ll val, lz1, lz2;
+};
+
+const int sz = 1 << 18;
+const ll one = 1;
+vector<node> tree(2 * sz);
+vector<ll> a(sz);
+
+void pushup(int p)
+{
+	int lc = 2 * p, rc = 2 * p + 1;
+	tree[p].val = tree[lc].val + tree[rc].val;
+}
+
+void pushdown(int p, int l, int mid, int r)
+{
+	ll lz1 = tree[p].lz1, lz2 = tree[p].lz2;
+	tree[p].lz1 = 0, tree[p].lz2 = 0;
+	int lc = 2 * p, rc = 2 * p + 1;
+	tree[lc].val += (lz1 * 2 + lz2 * (mid - l)) * (mid - l + 1) / 2, tree[lc].lz1 += lz1, tree[lc].lz2 += lz2;
+	tree[rc].val += (lz1 * 2 + lz2 * (mid - l * 2 + r + 1)) * (r - mid) / 2, tree[rc].lz1 += lz1 + lz2 * (mid - l + 1), tree[rc].lz2 += lz2;
+}
+
+void build(int p, int l, int r)
+{
+	tree[p].lz1 = 0, tree[p].lz2 = 0;
+	if (l == r)
+	{
+		tree[p].val = a[l];
+		return;
+	}
+
+	int mid = l + (r - l) / 2;
+	int lc = 2 * p, rc = 2 * p + 1;
+	build(lc, l, mid);
+	build(rc, mid + 1, r);
+	pushup(p);
+}
+
+void upd(int p, int l, int r, int a, int b)
+{
+	if ((a > r) || (b < l)) return;
+	if ((a <= l) && (r <= b))
+	{
+		tree[p].val += one * (l + r - a * 2 + 2) * (r - l + 1) / 2;
+		tree[p].lz1 += l - a + 1, tree[p].lz2++;
+		return;
+	}
+
+	int mid = l + (r - l) / 2;
+	int lc = 2 * p, rc = 2 * p + 1;
+	pushdown(p, l, mid, r);
+	upd(lc, l, mid, a, b);
+	upd(rc, mid + 1, r, a, b);
+	pushup(p);
+}
+
+ll query(int p, int l, int r, int a, int b)
+{
+	if ((a > r) || (b < l)) return 0;
+	if ((a <= l) && (r <= b)) return tree[p].val;
+	int mid = l + (r - l) / 2;
+	int lc = 2 * p, rc = 2 * p + 1;
+	pushdown(p, l, mid, r);
+	return query(lc, l, mid, a, b) + query(rc, mid + 1, r, a, b);
+}
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	int n, _;
+	cin >> n >> _;
+	for (int i = 1; i <= n; i++) cin >> a[i];
+	build(1, 1, n);
+
+	while (_--)
+	{
+		int q, a, b;
+		cin >> q >> a >> b;
+		if (q == 1) upd(1, 1, n, a, b);
+		else cout << query(1, 1, n, a, b) << "\n";
+	}
+}
