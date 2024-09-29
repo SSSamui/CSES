@@ -1,0 +1,84 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+ 
+const int MXN = 2e5 + 1;
+ 
+vector<int> dep(MXN, 0), cnum(MXN, -1), comp(MXN, -1), rt(MXN), clen(0);
+vector<vector<int>> inv(MXN);
+ 
+void dfs(int node)
+{
+	for (int nxt : inv[node]) if (cnum[nxt] == -1)
+	{
+		rt[nxt] = rt[node], comp[nxt] = comp[node], dep[nxt] = dep[node] + 1;
+		dfs(nxt);
+	}
+}
+ 
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+ 
+	int n, _;
+	cin >> n >> _;
+	vector<vector<int>> blft(1, vector<int>(n + 1));
+	for (int i = 1; i <= n; i++) cin >> blft[0][i];
+	for (int i = 1; i <= n; i++) inv[blft[0][i]].push_back(i);
+ 
+	int k = 31;
+	while (k--)
+	{
+		vector<int> nxt(n + 1);
+		for (int i = 1; i <= n; i++) nxt[i] = blft.back()[blft.back()[i]];
+		blft.push_back(nxt);
+	}
+ 
+	for (int i = 1; i <= n; i++) if (comp[i] == -1)
+	{
+		int a = blft[0][i], b = blft[1][i];
+		while (a != b) a = blft[0][a], b = blft[1][b];
+		if (cnum[a] == -1)
+		{
+			vector<int> cyc(1, a);
+			a = blft[0][a];
+			while (a != cyc[0])
+			{
+				cyc.push_back(a);
+				a = blft[0][a];
+			}
+ 
+			for (int j = 0; j < cyc.size(); j++) cnum[cyc[j]] = j, comp[cyc[j]] = clen.size(), rt[cyc[j]] = cyc[j];
+			for (int j = 0; j < cyc.size(); j++) dfs(cyc[j]);
+ 
+			clen.push_back(cyc.size());
+		}
+	}
+ 
+	while (_--)
+	{
+		int a, b;
+		cin >> a >> b;
+		if (comp[a] != comp[b]) cout << "-1\n";
+		else if (dep[a] < dep[b]) cout << "-1\n";
+		else if (dep[b] > 0)
+		{
+			int it = dep[a] - dep[b];
+			int cnt = a;
+			for (int i = 0; i < blft.size(); i++) if (it & (1 << i)) cnt = blft[i][cnt];
+			if (cnt == b) cout << it << "\n";
+			else cout << "-1\n";
+		}
+ 
+		else
+		{
+			int ans = cnum[b] - cnum[rt[a]];
+			if (ans < 0) ans += clen[comp[a]];
+			ans += dep[a];
+			cout << ans << "\n";
+		}
+	}
+}
