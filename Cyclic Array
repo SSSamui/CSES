@@ -1,0 +1,71 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+using ll = long long;
+ 
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+ 
+	int n;
+	ll k;
+	cin >> n >> k;
+	vector<vector<ll>> blft(1, vector<ll>(n));
+	for (int i = 0; i < n; i++) cin >> blft[0][i];
+	vector<int> pw(0);
+	int cnt = 1;
+	while (cnt * 2 <= n)
+	{
+		pw.push_back(cnt);
+		vector<ll> nxt = blft.back();
+		for (int i = 0; i < n; i++) nxt[i] += blft.back()[(i + cnt) % n];
+		blft.push_back(nxt);
+		cnt *= 2;
+	}
+ 
+	pw.push_back(cnt);
+	vector<vector<ll>> fblft(1, vector<ll>(n));
+	for (int i = 0; i < n; i++)
+	{
+		int mln = 0, cntind = i;
+		ll cntsm = 0;
+		for (int j = blft.size() - 1; j > -1; j--) if (cntsm + blft[j][cntind] <= k)
+		{
+			cntsm += blft[j][cntind], mln += pw[j];
+			cntind = (cntind + pw[j]) % n;
+		}
+ 
+		fblft[0][i] = mln;
+	}
+ 
+	for (int i = 1; i < pw.size(); i++)
+	{
+		vector<ll> nxt = fblft.back();
+		for (int j = 0; j < n; j++) nxt[j] += fblft.back()[(j + fblft.back()[j]) % n];
+		fblft.push_back(nxt);
+	}
+ 
+	ll nn = n;
+	int fans = n;
+	for (int i = 0; i < n; i++)
+	{
+		int curr = i, nans = n, nnans = 0;
+		ll currcnt = 0;
+		for (int j = pw.size() - 1; j > -1; j--)
+		{
+			if (currcnt + fblft[j][curr] >= nn) nans = nnans + pw[j];
+			else
+			{
+				currcnt += fblft[j][curr], nnans += pw[j];
+				curr = (curr + fblft[j][curr]) % n;
+			}
+		}
+ 
+		fans = fmin(fans, nans);
+	}
+ 
+	cout << fans;
+}
