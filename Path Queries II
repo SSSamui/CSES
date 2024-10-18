@@ -1,0 +1,108 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+using namespace std;
+ 
+const int MXN = 2e5 + 1;
+const int sz = 1 << 18;
+ 
+vector<vector<int>> adj(MXN, vector<int>(0));
+ 
+vector<int> par(MXN), sbtreesz(MXN, 1), top(MXN), dep(MXN, 0);
+vector<int> indnde(MXN);
+ 
+vector<int> segtree(2 * sz, 0);
+ 
+int ind = -1;
+ 
+void update(int node, int toupd)
+{
+	node += sz;
+	segtree[node] = toupd;
+	while (node > 1)
+	{
+		node /= 2;
+		segtree[node] = fmax(segtree[2 * node], segtree[2 * node + 1]);
+	}
+}
+ 
+int rq(int l, int r)
+{
+	l += sz, r += sz;
+	int ans = 0;
+	while (l <= r)
+	{
+		if (l % 2 == 1) ans = fmax(ans, segtree[l++]);
+		if (r % 2 == 0) ans = fmax(ans, segtree[r--]);
+		l /= 2, r /= 2;
+	}
+ 
+	return ans;
+}
+ 
+void sbtreedfs(int node = 1, int p = 0)
+{
+	for (int nxt : adj[node]) if (nxt != p)
+	{
+		dep[nxt] = dep[node] + 1;
+		sbtreedfs(nxt, node);
+		par[nxt] = node, sbtreesz[node] += sbtreesz[nxt];
+	}
+}
+ 
+void hldfs(int node = 1, int p = 0, int tp = 1)
+{
+	indnde[node] = ++ind, top[node] = tp;
+	int nxtnde = node, nxtsz = 0;
+	for (int nxt : adj[node]) if ((sbtreesz[nxt] > nxtsz) && (nxt != p)) nxtnde = nxt, nxtsz = sbtreesz[nxt];
+	if (nxtnde != node)
+	{
+		hldfs(nxtnde, node, tp);
+		for (int nxt : adj[node]) if ((nxt != p) && (nxt != nxtnde)) hldfs(nxt, node, nxt);
+	}
+}
+ 
+int pq(int x, int y)
+{
+	int ans = 0;
+	while (top[x] != top[y])
+	{
+		if (dep[top[x]] < dep[top[y]]) swap(x, y);
+		ans = fmax(ans, rq(indnde[top[x]], indnde[x]));
+		x = par[top[x]];
+	}
+ 
+	if (dep[x] > dep[y]) swap(x, y);
+	ans = fmax(ans, rq(indnde[x], indnde[y]));
+	return ans;
+}
+ 
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+ 
+	int n, _;
+	cin >> n >> _;
+	vector<int> v(n + 1);
+	for (int i = 1; i <= n; i++) cin >> v[i];
+	for (int i = 1; i < n; i++)
+	{
+		int a, b;
+		cin >> a >> b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+ 
+	sbtreedfs();
+	hldfs();
+	for (int i = 1; i <= n; i++) update(indnde[i], v[i]);
+ 
+	while (_--)
+	{
+		int q, a, b;
+		cin >> q >> a >> b;
+		if (q == 1) update(indnde[a], b);
+		else cout << pq(a, b) << ' ';
+	}
+}
